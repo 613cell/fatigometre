@@ -1,0 +1,209 @@
+{% extends "base.html" %}
+
+{% block title %}Fatigomètre - Sélectionnez votre niveau de fatigue{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="fatigue-selector-container">
+        <!-- Logo centré en haut -->
+        <div class="logo-header fade-in">
+            <img src="{{ url_for('static', filename='images/biotech.png') }}" alt="Logo Gelphore" class="main-logo">
+        </div>
+        
+        <!-- Titre sous le logo -->
+        <h1 class="page-title fade-in text-center dynamic-title">
+            Choisissez votre boost Gelphore selon votre forme du jour!
+        </h1>
+        
+        <div class="card fade-in reglette-card">
+            <div class="card-header">
+                <i class="bi bi-activity"></i> Faites glisser le curseur sur la réglette
+            </div>
+            <div class="card-body reglette-body">
+                <div class="reglette-wrapper">
+                    <img src="{{ url_for('static', filename='images/Reglette.png') }}" alt="Réglette de fatigue" class="reglette-image" id="regletteImage">
+                    <div class="reglette-overlay">
+                        <input type="range" 
+                               id="fatigueSlider" 
+                               class="fatigue-slider" 
+                               min="0" 
+                               max="100" 
+                               value="0"
+                               step="1">
+                        <div class="slider-track"></div>
+                    </div>
+                </div>
+                <div class="fatigue-levels">
+                    <div class="level-indicator" data-level="enfant">Enfant</div>
+                    <div class="level-indicator" data-level="legere">Légère</div>
+                    <div class="level-indicator" data-level="moderee">Modérée</div>
+                    <div class="level-indicator" data-level="intense">Intense</div>
+                    <div class="level-indicator" data-level="severe">Sévère</div>
+                </div>
+                <div class="current-level-display">
+                    <span id="currentLevelText">Positionnez le curseur sur la réglette</span>
+                </div>
+                <button class="btn btn-primary validate-btn" id="validateBtn" disabled>
+                    <i class="bi bi-check-circle"></i> Valider mon choix
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-content">
+            <div class="bee-animation">
+                <i class="bi bi-hexagon-fill bee-icon"></i>
+            </div>
+            <div class="loading-text">
+                <h2>Analyse en cours...</h2>
+                <p>Nous sélectionnons le meilleur produit pour vous</p>
+            </div>
+            <div class="honey-drops">
+                <span></span>
+                <span></span>
+                <span></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Product Result Screen -->
+    <div class="product-result" id="productResult" style="display: none;">
+        <div class="card product-card fade-in">
+            <div class="card-header">
+                <i class="bi bi-star-fill"></i> Produit recommandé
+            </div>
+            <div class="card-body product-body">
+                <div class="product-info">
+                    <h2 id="productName"></h2>
+                    <p class="product-subtitle">Votre solution naturelle à base de gelée royale</p>
+                </div>
+                <div class="product-image-container">
+                    <img id="productImage" src="" alt="Produit recommandé" class="product-image">
+                </div>
+                <div class="product-description">
+                    <p>Ce produit a été spécialement sélectionné pour répondre à votre niveau de fatigue.</p>
+                </div>
+                <div class="product-actions">
+                    <a href="https://www.laboratoiresbiotech.com/" target="_blank" class="btn btn-primary order-btn">
+                        <i class="bi bi-cart-plus"></i> Commandez dès maintenant
+                    </a>
+                    <button class="btn btn-secondary" onclick="location.reload()">
+                        <i class="bi bi-arrow-clockwise"></i> Nouvelle évaluation
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const slider = document.getElementById('fatigueSlider');
+    const regletteImage = document.getElementById('regletteImage');
+    const validateBtn = document.getElementById('validateBtn');
+    const currentLevelText = document.getElementById('currentLevelText');
+    const loadingScreen = document.getElementById('loadingScreen');
+    const productResult = document.getElementById('productResult');
+    const productImage = document.getElementById('productImage');
+    const productName = document.getElementById('productName');
+
+    // Mapping des niveaux de fatigue
+    const fatigueLevels = [
+        { min: 0, max: 20, level: 'enfant', name: 'Fatigue chez l\'enfant' },
+        { min: 21, max: 40, level: 'legere', name: 'Fatigue légère' },
+        { min: 41, max: 60, level: 'moderee', name: 'Fatigue modérée' },
+        { min: 61, max: 80, level: 'intense', name: 'Fatigue intense' },
+        { min: 81, max: 100, level: 'severe', name: 'Fatigue sévère' }
+    ];
+
+    let currentLevel = null;
+
+    // Fonction pour déterminer le niveau de fatigue
+    function getFatigueLevel(value) {
+        for (let level of fatigueLevels) {
+            if (value >= level.min && value <= level.max) {
+                return level;
+            }
+        }
+        return fatigueLevels[0];
+    }
+
+    // Mise à jour lors du scroll
+    slider.addEventListener('input', function(e) {
+        const value = parseInt(e.target.value);
+        const level = getFatigueLevel(value);
+        
+        currentLevel = level.level;
+        currentLevelText.textContent = `Niveau sélectionné : ${level.name}`;
+        
+        // Mise à jour visuelle des indicateurs
+        document.querySelectorAll('.level-indicator').forEach(indicator => {
+            indicator.classList.remove('active');
+            if (indicator.dataset.level === level.level) {
+                indicator.classList.add('active');
+            }
+        });
+        
+        // Activer le bouton de validation
+        if (value > 0) {
+            validateBtn.disabled = false;
+        }
+    });
+
+    // Validation
+    validateBtn.addEventListener('click', function() {
+        if (!currentLevel) return;
+        
+        // Afficher l'écran de chargement
+        loadingScreen.style.display = 'flex';
+        document.querySelector('.fatigue-selector-container').style.display = 'none';
+        
+        // Simuler un chargement avec animation
+        setTimeout(() => {
+            // Récupérer le produit via l'API
+            fetch('/api/fatigue-level', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ level: currentLevel })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Masquer le chargement
+                    loadingScreen.style.display = 'none';
+                    
+                    // Afficher le résultat
+                    productImage.src = `/static/images/${data.product.image}`;
+                    productName.textContent = data.product.name;
+                    productResult.style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+                loadingScreen.style.display = 'none';
+                alert('Une erreur est survenue. Veuillez réessayer.');
+            });
+        }, 2500); // Animation de chargement de 2.5 secondes
+    });
+
+    // Animation d'apparition
+    document.addEventListener('DOMContentLoaded', function() {
+        const elements = document.querySelectorAll('.card');
+        elements.forEach((element, index) => {
+            element.style.opacity = '0';
+            element.style.transform = 'translateY(20px)';
+            setTimeout(() => {
+                element.style.transition = 'all 0.5s ease';
+                element.style.opacity = '1';
+                element.style.transform = 'translateY(0)';
+            }, index * 100);
+        });
+    });
+</script>
+{% endblock %}
+
