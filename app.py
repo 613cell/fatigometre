@@ -7,23 +7,23 @@ app.secret_key = 'fatigometre-secret-key-2025'
 FATIGUE_PRODUCTS = {
     'enfant': {
         'name': 'Fatigue chez l\'enfant',
-        'image': 'kidspng.png'
+        'image': 'Kids.gif'
     },
     'legere': {
         'name': 'Fatigue légère',
-        'image': 'mag.png'
+        'image': 'Mag.gif'
     },
     'moderee': {
         'name': 'Fatigue modérée',
-        'image': 'plus.png'
+        'image': 'Plus.gif'
     },
     'intense': {
         'name': 'Fatigue intense',
-        'image': 'pro.png'
+        'image': 'Pro.gif'
     },
     'severe': {
         'name': 'Fatigue sévère',
-        'image': 'boost.png'
+        'image': 'Boost.gif'
     }
 }
 
